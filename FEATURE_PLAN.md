@@ -221,8 +221,8 @@ The **launch-blocking minimum** is milestones 1–6 (a new user can learn a topi
 
 ## Open Questions (for the next session)
 
-- Tech stack (React Native vs Flutter vs native; backend choice) — deliberately not decided here since this was a feature-planning session.
-- LLM provider/model choice and per-course generation cost budget.
+- **Tech stack — LOCKED.** See `ARCHITECTURE.md` (Flutter + Firebase + Vertex AI/Gemini + Cloud Run + PostHog).
+- Per-course generation cost budget — needs a first real cost measurement to set.
 - App name and branding.
 
 ## Verification
