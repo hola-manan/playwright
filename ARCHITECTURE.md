@@ -18,13 +18,16 @@ was the weaker fit.
 | Area | Decision |
 |------|----------|
 | Mobile client | **Flutter** (Dart) |
+| Backend language | **Python** — FastAPI + Pydantic |
 | Auth | **Firebase Auth** — email + Google + Apple |
 | Database | **Firebase Data Connect / SQL Connect** → managed **PostgreSQL** (Cloud SQL) |
-| AI compute / API | **Cloud Run** (containerized service) |
+| AI compute / API | **Cloud Run** (containerized Python service) |
 | LLM | **Vertex AI — Gemini 2.5 Flash** (volume) + **Gemini 2.5 Pro** (course outline only) |
-| Code sandbox | **Constrained in-process execution** — JS (isolated engine) + Python (Pyodide/WASM) |
+| Code sandbox | **Constrained execution** — JS (isolated engine) + Python (Pyodide/WASM) |
 | Push notifications | **FCM** (Firebase Cloud Messaging) |
 | Analytics | **PostHog** |
+| CI/CD — mobile | **Codemagic** (build + store submission) |
+| CI/CD — backend | **GitHub Actions + Workload Identity Federation** (keyless deploy to Cloud Run) |
 | File/asset storage | **Firebase Storage** (if/when needed) |
 
 ---
@@ -55,10 +58,23 @@ was the weaker fit.
   including the **guest → account migration** flow (anonymous auth upgraded to a
   permanent account, preserving first-lesson progress).
 
+### Backend language — Python (FastAPI + Pydantic)
+- The backend's core job is the **AI generation pipeline + tutor**, which is Python's
+  home turf: the **Vertex AI Python SDK** is first-class, most Gemini docs/examples are
+  Python, and **Pydantic** is the cleanest way to validate Gemini's structured
+  (JSON-schema) lesson output before it's persisted. FastAPI covers streaming/SSE.
+- Considered and rejected: **Node/TS** (great at streaming and runs the JS sandbox
+  in-process, but thinner AI ecosystem) and **Dart** (would share language with the
+  Flutter client, but the weakest server-side Gemini tooling — a poor fit exactly where
+  the product is hardest).
+- Note: the code sandbox is **polyglot regardless of backend language** (it must run
+  both JS and Python exercises), so it's a small separate execution component either
+  way — not a reason to pick one backend language over another.
+
 ### AI compute — Cloud Run
 - The AI pipeline (outline + lesson generation, streamed), the **conversational
-  tutor**, and the **code-execution sandbox** run in a containerized **Cloud Run**
-  service.
+  tutor**, and the **code-execution sandbox** run in a containerized **Python** service
+  on **Cloud Run**.
 - Chosen over Cloud Functions because: no hard execution-timeout ceiling (long,
   streamed course generation is fine), the JS/WASM sandbox runs **in-process**
   inside the container, and it scales to zero when idle.
@@ -114,7 +130,7 @@ Flutter app (Dart)
   ├── Firebase Data Connect SDK ........... reads/writes → PostgreSQL (Cloud SQL)
   ├── FCM ................................. push notifications
   ├── PostHog SDK ......................... product analytics
-  └── HTTPS/SSE → Cloud Run service
+  └── HTTPS/SSE → Cloud Run service (Python / FastAPI)
                     ├── Vertex AI: Gemini 2.5 Flash (lessons, exercises, tutor)
                     ├── Vertex AI: Gemini 2.5 Pro   (course outline)
                     ├── Sandbox: isolated JS engine + Pyodide/WASM (answer-key verify)
@@ -123,11 +139,42 @@ Flutter app (Dart)
 
 ---
 
+## CI/CD
+
+| Area | Decision |
+|------|----------|
+| Mobile (Flutter) | **Codemagic** — build iOS+Android, code signing, store submission |
+| Backend (Cloud Run) | **GitHub Actions + Workload Identity Federation** (keyless) |
+| Environments | **Staging + Prod** — separate Firebase projects, Cloud Run services, PostHog envs |
+| Release cadence | Auto → test track (TestFlight / Play internal); **manual** promotion to public |
+| Secrets | **Google Secret Manager** (backend runtime) + **GitHub OIDC** (deploy auth) + **Codemagic encrypted env** (signing/store keys) — no long-lived keys |
+
+### Backend — GitHub Actions + WIF
+- On PR: backend lint + unit tests. On merge to `main`: build container → push to
+  **Artifact Registry** → deploy to Cloud Run **staging**; **manual approval** → prod.
+- **Workload Identity Federation** (OIDC) means no long-lived GCP service-account keys
+  to leak or rotate; access is scoped per-repo and per-environment.
+- **Data Connect schema migrations** run as a deploy step (strict mode), **staging
+  first**, before the Cloud Run deploy that depends on them.
+
+### Mobile — Codemagic
+- Purpose-built for Flutter: it owns **iOS code signing** and **TestFlight / Play
+  Console submission** — the biggest mobile-CI time sink — on fast M-series runners.
+- On PR: `flutter analyze`, `flutter test`, `dart format --set-exit-if-changed`. On
+  merge to `main`: build both platforms → auto-publish to the test tracks.
+- **Cost:** free tier is 500 macOS-M2 min/month (personal account); pay-as-you-go
+  ~$0.095/min after. Solo/pre-launch usage is effectively free; the $3,990/yr flat
+  team plan only wins past ~3,500 build-min/month. Chosen for ergonomics, not price.
+- Accepted tradeoff: **two CI tools** (Codemagic + GitHub Actions). Overridable to a
+  single-tool GitHub Actions + Fastlane setup if unified tooling is preferred over
+  mobile ergonomics.
+
+**Not yet scaffolded:** no pipeline YAML exists — there's no Flutter project or Cloud
+Run service to build yet. The config files land with that first code; this section is
+the decided approach so that work is turn-key.
+
+---
+
 ## Still Open (not architecture-blocking)
 
-- **CI/CD & release**: build/deploy pipeline for Flutter (e.g. Codemagic / Fastlane)
-  and Cloud Run (Cloud Build). Decide before first release, not before first code.
-- **Secrets/config management**: Google Secret Manager is the natural default.
-- **Per-course generation cost budget**: concrete ceiling to tune Flash/Pro usage and
-  free-tier generation limits. Needs a first real cost measurement to set.
-- **App name & branding**: still open (product decision, tracked in the feature plan).
+- **App name & branding**: product decision, tracked separately.

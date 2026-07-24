@@ -219,11 +219,11 @@ The **launch-blocking minimum** is milestones 1–6 (a new user can learn a topi
 
 ---
 
-## Open Questions (for the next session)
+## Stack Decisions (locked)
 
-- **Tech stack — LOCKED.** See `ARCHITECTURE.md` (Flutter + Firebase + Vertex AI/Gemini + Cloud Run + PostHog).
-- Per-course generation cost budget — needs a first real cost measurement to set.
-- App name and branding.
+- **Full stack — LOCKED.** See `ARCHITECTURE.md`: Flutter client, **Python (FastAPI)** on Cloud Run, Firebase (Auth + Data Connect/Postgres + FCM), Vertex AI Gemini 2.5 (Flash + Pro for outlines), PostHog analytics, polyglot code sandbox.
+- **CI/CD — LOCKED.** Codemagic (mobile) + GitHub Actions/WIF (backend); staging + prod.
+- **Still open** — app name and branding.
 
 ## Verification
 
