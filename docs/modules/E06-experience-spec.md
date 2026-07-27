@@ -70,7 +70,8 @@ can be changed.
 | Moment | Target | Owner | Source |
 |--------|--------|-------|--------|
 | App launch → interactive | < 1.5s | `C01` | derived |
-| Topic submitted → first outline row | < 3s | `E02`, `B04` | `:36` "within seconds" |
+| Topic submitted → retrieval complete | < 800ms | `P13` | derived — see below |
+| Topic submitted → first outline row | < 3s **including retrieval** | `E02`, `B04`, `P13` | `:36` "within seconds" |
 | Outline confirmed → first card rendered | < 3s | `E02`, `B05` | `:50` "within seconds" |
 | **Topic → first card, end to end** | **< 60s** | `C06`, `C07` | `:30` |
 | Answer submitted → feedback visible | < 1 frame | `E01`, `C14` | `:79` pre-generated |
@@ -84,6 +85,21 @@ Measurement points are instrumented in `F06` so these are reported, not assumed.
 The 60-second target is the single most important number in the table: it is the
 stated design goal of the most important screen sequence in the app
 (`FEATURE_PLAN.md:30`).
+
+### The retrieval hop
+
+Grounding content by retrieval (`P13`) puts a lookup in front of generation. Two
+properties keep it inside the budget:
+
+- It runs **once per course, at outline time**. Lesson generation reuses the
+  stored context, so the more frequently-hit "first card within seconds" target
+  pays **zero** retrieval cost.
+- It has a **hard timeout**. On expiry, generation proceeds ungrounded with `P14`
+  hedging rather than waiting. Grounding degrades; availability does not.
+
+The 800ms figure is proposed, not measured. `P13` must validate it against real
+corpus scale, and if it does not hold, this table is the thing that changes —
+the "within seconds" promise is not negotiable against it.
 
 ## Degradation ladder
 
@@ -117,6 +133,9 @@ The rule underneath: **the user's first run is never a dead end**
 
 - Whether the 60-second target is measured from app open or from topic submission
   — the source says "topic → first card" but the sequence begins earlier.
+- Whether 800ms for retrieval survives contact with a real corpus. If not, either
+  retrieval moves off the outline path entirely or the first-row budget absorbs
+  the difference.
 - Whether the > 15s starter-topic offer is a hard cut or user-dismissible.
 - Whether frame budget is enforced in CI (`F05`) or profiled manually per release.
 

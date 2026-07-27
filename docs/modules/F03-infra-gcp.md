@@ -25,6 +25,10 @@ once and instantiates it twice.
   environment
 - IAM roles for the Cloud Run runtime identity (Vertex AI, Cloud SQL, Secret
   Manager, FCM)
+- Vertex AI **embedding model** access and vector search configuration on Cloud
+  SQL, for `P12` and `P13`
+- A job runtime for scheduled ingestion (`P12`), which cannot run on the request
+  path — the same scheduling question `B18` raises
 
 **Does not own**
 - The pipelines that consume WIF → `F04`

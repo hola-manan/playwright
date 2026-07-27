@@ -27,7 +27,8 @@ v1 rather than later.
 **Does not own**
 - Execution → `B08`
 - Regeneration → `B07`, `B05`
-- Non-code exercise correctness, which has no automated check
+- Factual accuracy of prose and conceptual claims → `P14` (constraints and
+  hedging) and `P16`/`P17` (scoring). This module covers only what can be **run**
 
 ## Source references
 

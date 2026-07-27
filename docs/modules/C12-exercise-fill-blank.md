@@ -23,7 +23,9 @@ matching. That dual mode is the whole complexity of this module.
 - Blank presentation within prose or code
 
 **Does not own**
-- Which mode a given exercise uses → `B05` sets difficulty, this module maps it
+- Which mode a given exercise uses → `P09` defines the lever, `B05` applies it
+- The tolerance rules being implemented — what counts as a synonym, when case
+  matters → `P06`. This module implements the spec it is handed
 - Synonym lists → generated with the exercise by `B05`
 - Feedback → `C14`
 

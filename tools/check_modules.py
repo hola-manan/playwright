@@ -15,8 +15,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SPEC_DIR = ROOT / "docs" / "modules"
 INDEX = SPEC_DIR / "README.md"
 
-ID_RE = re.compile(r"\b([FEBC]\d{2})\b")
-EXPECTED_COUNT = 52
+ID_RE = re.compile(r"\b([FEBCP]\d{2})\b")
+EXPECTED_COUNT = 69
 
 failures = []
 notes = []
@@ -38,7 +38,7 @@ specs = {}
 for p in sorted(SPEC_DIR.glob("*.md")):
     if p.name in ("README.md", "_TEMPLATE.md"):
         continue
-    m = re.match(r"([FEBC]\d{2})-(.+)\.md$", p.name)
+    m = re.match(r"([FEBCP]\d{2})-(.+)\.md$", p.name)
     if not m:
         fail("naming", f"{p.name} does not match <ID>-<name>.md")
         continue
@@ -48,7 +48,7 @@ for p in sorted(SPEC_DIR.glob("*.md")):
 index_text = INDEX.read_text()
 index_ids = set()
 for line in index_text.splitlines():
-    m = re.match(r"\|\s*\[([FEBC]\d{2})\]\(", line)
+    m = re.match(r"\|\s*\[([FEBCP]\d{2})\]\(", line)
     if m:
         index_ids.add(m.group(1))
 
@@ -65,6 +65,12 @@ for missing in sorted(index_ids - set(specs)):
 TIER_OF = lambda mid: mid[0]
 # Engines may use client *core* (C01-C04) but never a client feature screen.
 CLIENT_FEATURES = {f"C{n:02d}" for n in range(5, 20)}
+# The tier rule exists to keep the *request path* acyclic. Two pedagogy modules
+# are offline pipelines rather than request-path participants: P12 ingestion runs
+# on a schedule and P17 eval drives the pipeline it scores. Both legitimately use
+# shared backend clients, so both are exempt. P13 retrieval IS on the request path
+# and is deliberately not exempt.
+PEDAGOGY_OFFLINE = {"P12", "P17"}
 
 for mid, spec in sorted(specs.items()):
     deps = set(ID_RE.findall(section(spec["text"], "Depends on"))) - {mid}
@@ -81,8 +87,30 @@ for mid, spec in sorted(specs.items()):
             fail("3 direction", f"{mid} (backend) depends on {d} (tier {dt})")
         if tier == "E" and d in CLIENT_FEATURES:
             fail("3 direction", f"{mid} (engine) depends on client feature {d}")
-        if tier == "F" and dt in ("C", "E"):
+        if tier == "F" and dt in ("C", "E", "P"):
             fail("3 direction", f"{mid} (foundation) depends on {d} (tier {dt})")
+        if tier == "P" and dt in ("B", "C", "E") and mid not in PEDAGOGY_OFFLINE:
+            fail("3 direction", f"{mid} (pedagogy) depends on {d} (tier {dt})")
+
+# ------------------------------------------- check 5: no orphaned ownership
+# Every "→ `Pxx`" arrow in a "Does not own" block must land on a module that
+# actually claims that responsibility under "Owns". This is what proves a scope
+# transfer happened rather than merely being declared.
+for mid, spec in sorted(specs.items()):
+    scope = section(spec["text"], "Scope")
+    if "**Does not own**" not in scope:
+        continue
+    disowned = scope.split("**Does not own**", 1)[1]
+    for ref in sorted(set(ID_RE.findall(disowned))):
+        if ref == mid:
+            fail("5 orphan", f"{mid} disowns something to itself")
+        elif ref not in specs:
+            fail("5 orphan", f"{mid} disowns to {ref}, which does not exist")
+        else:
+            owns = section(specs[ref]["text"], "Scope")
+            if "**Owns**" not in owns:
+                fail("5 orphan",
+                     f"{mid} disowns to {ref}, but {ref} has no Owns block")
 
 # ------------------------------------------------- check 4: source references
 for mid, spec in sorted(specs.items()):

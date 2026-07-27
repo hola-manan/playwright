@@ -21,6 +21,9 @@ than discovering it from a bill.
 - Aggregation and reporting: cost per user, per topic, per generated course, per
   tutor thread
 - Budget alerting thresholds
+- Separate spend categories for the pedagogy tier, since each is independently
+  unbounded: **embedding** (`P12` ingestion), **retrieval** (`P13` query
+  embedding), and **judge** (`P17` quality gating)
 
 **Does not own**
 - Enforcement of per-user limits → `B17` for the tutor, `B10` for generation reuse
