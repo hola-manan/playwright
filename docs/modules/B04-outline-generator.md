@@ -15,14 +15,17 @@ one call per course and quality here sets up every lesson that follows.
 ## Scope
 
 **Owns**
-- The outline prompt and its response schema
-- The scoping question for over-broad topics
-- Depth control: how *Quick intro* / *Solid working knowledge* / *Deep* scale
-  coverage and granularity
-- Topic normalisation for the `B10` cache key
+- Executing outline generation: the model call, streaming, and persistence
+- Applying the `P03` shape classification and its scoping decision
+- Applying `P04` curriculum rules and depth scaling
+- Computing the normalised topic for the `B10` cache key, per `P03` rules
 - Streaming outline rows as they are produced
 
 **Does not own**
+- Prompt content and composition → `P10`
+- Topic shapes, coverage checklists, over-broad criteria, normalisation rules → `P03`
+- Concept decomposition, ordering, lesson sizing, depth semantics → `P04`
+- Retrieved grounding context → `P13`
 - Lesson content → `B05`
 - Outline editing by the user → `C07`, `B11`
 - Cache storage and lookup → `B10`
@@ -38,7 +41,7 @@ one call per course and quality here sets up every lesson that follows.
 
 ## Depends on
 
-`B03`, `F08` (topic moderation), `F01`
+`B03`, `P03`, `P04`, `P10`, `P13`, `F08` (topic moderation), `F01`
 
 ## Depended on by
 
@@ -60,8 +63,9 @@ one-liner, and estimated minutes. `done` carries the persisted `course` id.
   (`FEATURE_PLAN.md:49`).
 - **The coverage target is equivalence to a good external source** — the user
   should not finish and still feel they need to go read the real tutorial. The
-  prompt asks for fundamentals → practical application → common pitfalls → next
-  steps, scaled by the chosen depth (`FEATURE_PLAN.md:59`).
+  arc is fundamentals → practical application → common pitfalls → next steps,
+  scaled by the chosen depth (`FEATURE_PLAN.md:59`). `P03` defines what that
+  covers per topic shape; `P04` orders it.
 - **Short-form is the format, not a limit on coverage** (`FEATURE_PLAN.md:22`).
   The prompt must not be tuned toward brevity.
 - **Gemini 2.5 Pro, outline only** (`ARCHITECTURE.md:87-90`).
@@ -75,11 +79,10 @@ product works, and it arrives before the outline is complete because rows stream
 
 ## Open questions
 
-- How "too broad" is detected — a model judgement, a heuristic, or a schema field
-  the model populates.
-- Whether depth control changes the prompt, the schema, or both.
-- Normalisation rules for the cache key: how aggressively do "git basics",
-  "Git Basics", and "learn git" collapse to one cached course?
+- Whether depth control changes the prompt, the schema, or both. `P04` defines the
+  two axes it must move along; the mechanism is this module's call.
+- Whether retrieval (`P13`) runs before the outline or after it — see that
+  module's open questions, since it changes what this one calls and when.
 
 ## Acceptance criteria
 

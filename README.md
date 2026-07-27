@@ -21,8 +21,9 @@ decisions, and the module breakdown for building them.
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | The locked technical stack and the reasoning behind each choice |
 | `apps/mobile/` | Flutter client (scaffold only) |
 | `services/api/` | Python / FastAPI service on Cloud Run (scaffold only) |
-| `packages/` | Schema, API contract, analytics taxonomy (scaffold only) |
+| `packages/` | Schema, API contract, analytics taxonomy, **pedagogy rules** (scaffold only) |
 | `infra/` | GCP footprint and CI pipelines (scaffold only) |
+| `tools/` | Module verification, and the content eval harness (scaffold only) |
 
 Every folder under `apps/`, `services/`, `packages/`, and `infra/` contains a
 README stub naming its module and linking to that module's spec.
@@ -53,18 +54,28 @@ Federation for the backend. Staging and prod are separate Firebase projects.
 
 ## How the work is organised
 
-The project is split into **52 modules** across four tiers, each sized so a single
+The project is split into **69 modules** across five tiers, each sized so a single
 session can own it end to end.
 
 | Tier | What it is | Count |
 |------|-----------|-------|
 | **F** — Foundation | Schema, API contract, infrastructure, CI, cross-cutting concerns | 8 |
+| **P** — Pedagogy & content intelligence | What the AI teaches, how it grounds it, and what gates it | 17 |
 | **E** — Engines & experience | The runtime that makes the app *feel* like the product | 6 |
 | **B** — Backend | Python / FastAPI services | 19 |
 | **C** — Client | Flutter screens and features | 19 |
 
-Tier E exists because the stack was chosen for it. `ARCHITECTURE.md` picks Flutter
-specifically for animation quality in a "gamified, card-swipe,
+Two tiers exist because the product would be hollow without them.
+
+**Tier P** is the core product. Tiers B and C move a course around; Tier P decides
+whether it is worth learning from — concept granularity, prerequisite ordering,
+what makes a distractor diagnostic rather than filler, what "easier" means without
+teaching less, and the rubric that blocks a bad lesson from reaching anyone. v1
+ships AI content with no human review gate, so that gate is automated and
+blocking.
+
+**Tier E** exists because the stack was chosen for it. `ARCHITECTURE.md` picks
+Flutter specifically for animation quality in a "gamified, card-swipe,
 micro-interaction-heavy" app, and the feature plan specifies feel directly —
 "satisfying confirmation + XP tick", "the dopamine beat — keep it snappy and
 celebratory", "first card visible within seconds". Those promises get owning

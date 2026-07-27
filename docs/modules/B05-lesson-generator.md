@@ -16,15 +16,20 @@ courses are deliberately unbounded in length.
 ## Scope
 
 **Owns**
-- Lesson prompt and response schema for cards and exercises
-- The four card types: concept, code, example, recap
-- The four exercise types: MCQ, predict-output, fill-blank, order-steps
-- Exercise interleave placement within the lesson
-- Pre-generated right/wrong explanations
-- Difficulty targeting from the `B13` signal
+- Executing lesson generation: the model call, streaming, and persistence
+- Emitting all four card types and all four exercise types per their rules
+- Applying the `P09` difficulty levers from the `B13` signal
+- Attaching per-distractor explanations to every exercise
 - Streaming cards and exercises as they complete
 
 **Does not own**
+- Prompt content and composition → `P10`
+- What a good card contains → `P05`
+- Exercise design, interleave placement, answer tolerance → `P06`
+- Distractors and misconception labels → `P07`
+- Explanation structure and tone → `P08`
+- What "easier" and "harder" mean → `P09`
+- Retrieved grounding context and hedging → `P13`, `P14`
 - Schema validation and the regenerate loop → `B06`
 - Answer-key execution → `B09`
 - Which lesson to generate when → `B07`
@@ -41,7 +46,7 @@ courses are deliberately unbounded in length.
 
 ## Depends on
 
-`B03`, `B04` (outline), `B13` (difficulty signal), `F01`
+`B03`, `B04` (outline), `B13` (difficulty signal), `P05`–`P10`, `P13`, `P14`, `F01`
 
 ## Depended on by
 
@@ -64,7 +69,9 @@ Writes `lesson`, `card`, `exercise`.
   teaching material (`FEATURE_PLAN.md:56`).
 - **Every exercise carries its explanation, generated with the lesson.** This is
   what makes post-answer feedback zero-latency (`FEATURE_PLAN.md:79`) and is a
-  hard requirement, not an optimisation.
+  hard requirement, not an optimisation. Per `P08`, explanations are
+  **per-distractor** — an MCQ with three wrong options needs three of them, which
+  is the main generation-cost consequence of the pedagogy tier.
 - **Fill-blank input adapts to difficulty** — token bank at easier levels, free
   typing at harder levels and in review, which means the generator must emit
   tokens *and* an answer tolerant of fuzzy matching (`FEATURE_PLAN.md:66`).
@@ -77,18 +84,18 @@ the lesson is usable long before it is complete.
 ## Open questions
 
 - Whether interleave placement is emitted by the model or computed
-  deterministically after generation — the latter is more controllable and more
-  cacheable.
-- Synonym lists for fuzzy fill-blank matching: generated per exercise, or a
-  shared normaliser in `C12`.
-- How the `B13` difficulty signal is expressed in the prompt without producing
-  patronising content at the easy end.
+  deterministically after generation from `P06`'s cadence rules — the latter is
+  more controllable and more cacheable.
+- Whether per-distractor explanations are generated in the same call as the
+  exercise or a follow-up call. One call is cheaper; two give better targeting.
+- How the `P09` levers are expressed — in the prompt, in the schema, or both.
+  `P09` requires they be unambiguous rather than left to model interpretation.
 
 ## Acceptance criteria
 
 - [ ] All four card types and all four exercise types are generated and validate
-- [ ] Every exercise has a pre-generated explanation for both correct and
-      incorrect answers
+- [ ] Every exercise has a pre-generated correct-path explanation and one
+      explanation per distractor, each targeting its labelled misconception
 - [ ] Every lesson ends with a recap card
 - [ ] Card count varies with concept density rather than sitting at a constant
 - [ ] The first card streams within the `E06` budget

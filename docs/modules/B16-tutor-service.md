@@ -24,6 +24,9 @@ is additive.
 - Conversation history management within the model's context window
 
 **Does not own**
+- How the tutor should explain — structure, tone, what "explain differently"
+  means → `P08`
+- What the tutor may assert, and when it must decline → `P14`
 - Metering, on-topic scoping, moderation → `B17`
 - Chat UI → `C18`
 - Model access → `B03`
@@ -39,7 +42,16 @@ is additive.
 
 ## Depends on
 
-`B03`, `B17`, `B11`, `F07`
+`B03`, `B17`, `B11`, `F07`, `P08` (explanatory standard), `P10` (prompt), `P14`
+(grounding)
+
+## The unreviewed surface
+
+Worth stating plainly: tutor replies are the **only** content a learner sees that
+`P17` never scores. Generated cards and exercises pass a blocking quality gate;
+tutor messages are produced live and read immediately, by someone who is already
+confused. `P14` therefore requires the tutor to decline rather than invent, and
+`P08` requires that "I'm not certain" be an acceptable answer.
 
 ## Depended on by
 

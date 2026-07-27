@@ -57,6 +57,15 @@ Every backend module (`B01`–`B19`), and `F02` for the shapes it serialises.
 | `tutor_thread` | `B16` | per user per course, with metering counters |
 | `tutor_message` | `B16` | role, content, context ref, token count |
 | `analytics_event` | `F06` | append-only |
+| `source` | `P11` | curated source: URL, trust tier, licensing assessment, freshness cadence |
+| `document` | `P12` | a fetched document from a source, with its version or retrieval date |
+| `chunk` | `P12` | structure-aligned chunk with **embedding vector**, section path, metadata |
+| `grounding_citation` | `P14` | binds a generated card or exercise to the chunk it drew on |
+
+The `exercise` payload also carries the pedagogy fields `P07` and `P08` require:
+each distractor has a **misconception label** and its **own explanation**, and each
+fill-blank carries an explicit **tolerance spec** including case policy. `B06`
+enforces these structurally.
 
 ## Decisions inherited
 
@@ -70,8 +79,11 @@ Every backend module (`B01`–`B19`), and `F02` for the shapes it serialises.
 - **Streak is derived from `daily_activity`, never stored as a counter.** This is
   what lets streak freezes be added later without a migration
   (`FEATURE_PLAN.md:128,167`).
-- **Vector search is available but unused in v1** — noted so no second datastore
-  gets introduced for it later (`ARCHITECTURE.md:55-56`).
+- **Vector search is used in v1.** `ARCHITECTURE.md:55-56` treats it as "a bonus
+  for later"; the decision to ground content by retrieval promotes it to now. The
+  "no second datastore" commitment still holds — Data Connect provides the vector
+  store — but the corpus tables above and their index are v1 scope. Divergence
+  recorded in `P12` and `P13`.
 
 ## Open questions
 
@@ -92,3 +104,6 @@ Every backend module (`B01`–`B19`), and `F02` for the shapes it serialises.
       schema change
 - [ ] A full user delete can be expressed as a bounded set of statements — `B02`
       can purge without orphans
+- [ ] The vector index supports `P13`'s retrieval inside its stated latency budget
+      at realistic corpus size
+- [ ] Corpus tables carry no user data, so they are untouched by `B02` deletion

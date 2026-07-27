@@ -102,6 +102,13 @@ labelled with what it does, not just an icon.
   is one tap cheaper.
 - Whether a re-queued exercise's feedback differs on the second pass — showing the
   same explanation again may be redundant.
+- **Whether to add a "report this card" affordance.** v1 ships AI content with no
+  human review gate, and `P17`'s automated gate is the only check — so there is
+  currently no path for a learner who spots something wrong. The source covers
+  reporting only for v2 community content (`FEATURE_PLAN.md:210`). This surface is
+  where a report would naturally live, it is cheap, and it would give `P14`'s
+  citation trail somewhere to be useful. Flagged as a product decision, not
+  assumed. See `P17`.
 
 ## Acceptance criteria
 

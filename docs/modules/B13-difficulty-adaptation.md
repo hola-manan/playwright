@@ -22,6 +22,8 @@ signal is always computed from the most recent performance data.
 - Recording the resulting adjustment on the enrollment
 
 **Does not own**
+- **What "easier" and "harder" mean in content terms → `P09`.** This module
+  computes *when* to adapt; `P09` defines *what changes*
 - Generating easier or harder content → `B05`
 - Presenting the pace toggle → `C15` or `C16`
 - Spaced repetition, which is cross-session → `B15`
@@ -36,7 +38,7 @@ signal is always computed from the most recent performance data.
 
 ## Depends on
 
-`B12` (results), `B11` (enrollment), `F01`
+`B12` (results), `B11` (enrollment), `P09` (lever semantics), `F01`
 
 ## Depended on by
 
@@ -56,6 +58,9 @@ lesson completed ──▶ compute miss rate
 1. The signal is computed after lesson completion and before `B07` schedules the
    next lesson — a late signal is a wasted signal.
 2. Difficulty moves one step at a time; no lesson jumps two levels.
+5. **Coverage is never reduced.** Per `P09`, an easier lesson has more
+   scaffolding, not less material — the signal must never be interpretable as
+   "teach less".
 3. The faster-pace change is an **offer**, never automatic — the user opts in
    (`FEATURE_PLAN.md:76`).
 4. Adaptation never rewrites an already-generated lesson.

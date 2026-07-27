@@ -17,12 +17,18 @@ malformed output is regenerated automatically. Nothing invalid reaches a learner
 - Pydantic schemas for every card type and every exercise type
 - Structural rules beyond types: an MCQ has exactly one correct option, an
   order-steps exercise has at least three steps, a fill-blank has a token bank
-  when required, a lesson ends with a recap card
+  when required and an explicit tolerance spec, a lesson ends with a recap card
+- Structural enforcement of the pedagogy payload: every distractor carries a
+  misconception label and its own explanation (`P07`, `P08`); every fill-blank
+  declares its case policy (`P06`)
 - The regenerate-on-malformed loop and its retry ceiling
 - The response schemas `B03` sends to Gemini
 
 **Does not own**
 - Whether an answer key is factually correct → `B09`
+- Whether content is factually true beyond executable claims → `P14`
+- Whether content is pedagogically any good → `P16`, `P17`
+- Cross-lesson coherence → `P15`
 - Generation itself → `B04`, `B05`
 - Pipeline orchestration → `B07`
 
@@ -38,11 +44,22 @@ malformed output is regenerated automatically. Nothing invalid reaches a learner
 
 ## Depends on
 
-`B03` (response schemas), `F01` (target shapes)
+`B03` (response schemas), `F01` (target shapes), `P06`, `P07`, `P08` (the payload
+shapes those rules require)
 
 ## Depended on by
 
-`B07`, `B05`
+`B07`, `B05`, `P17`
+
+## Where this sits
+
+Validation is the **first and cheapest** gate in a four-stage sequence, and
+rejecting here means the later, costlier stages never run:
+
+```
+B06 schema  ──▶ B09 answer keys ──▶ P15 coherence ──▶ P17 judge
+(free)          (sandbox)           (deterministic)   (model call)
+```
 
 ## Decisions inherited
 
@@ -67,8 +84,12 @@ malformed output is regenerated automatically. Nothing invalid reaches a learner
 
 - [ ] No card or exercise reaches the database without passing validation
 - [ ] Every structural rule listed above is enforced and unit-tested
+- [ ] An MCQ missing a misconception label or a per-distractor explanation is
+      rejected structurally, before `P17` ever sees it
 - [ ] A deliberately malformed model response triggers regeneration, not an error
       to the client
 - [ ] The retry ceiling is bounded and a lesson that exceeds it transitions to
       `failed` rather than looping
 - [ ] Validation models and Gemini response schemas cannot drift apart
+- [ ] Schemas satisfy every output-shape requirement `P10` declares, checked
+      whenever a prompt fragment version changes

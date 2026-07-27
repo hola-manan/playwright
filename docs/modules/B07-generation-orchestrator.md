@@ -39,7 +39,8 @@ here.
 
 ## Depends on
 
-`B04`, `B05`, `B06`, `B09`, `B10`, `F07`
+`B04`, `B05`, `B06`, `B09`, `B10`, `F07`, `P13` (retrieval), `P15` (coherence),
+`P17` (the gate)
 
 ## Depended on by
 
@@ -50,27 +51,49 @@ here.
 Per lesson:
 
 ```
-pending ──scheduled──▶ generating
+pending ──scheduled──▶ retrieving          (course-level, once — see below)
+retrieving ──context | timeout──▶ generating
 generating ──content ok──▶ validating
 validating ──invalid──▶ generating        (bounded retries, per B06)
 validating ──valid────▶ verifying          (only if the lesson has code exercises)
 verifying  ──mismatch─▶ generating        (bounded retries, per B09)
-verifying  ──ok───────▶ ready
+verifying  ──ok───────▶ evaluating
+evaluating ──below P16 threshold──▶ generating   (bounded retries, per P17)
+evaluating ──passes───▶ ready
 any state ──retries exhausted──▶ failed
 ```
+
+`retrieving` and `evaluating` are the pedagogy tier's two insertions.
+
+- **`retrieving`** (`P13`) runs **once per course at outline time**, not per
+  lesson. Lesson generation reuses the stored context and pays no retrieval
+  latency, which is what protects the `E06` first-card budget. A retrieval
+  timeout is **not** a failure — it proceeds to `generating` ungrounded, with
+  `P14` hedging applied.
+- **`evaluating`** (`P17`) is a **blocking quality gate**. Because v1 ships no
+  human review, a lesson below the `P16` threshold must not reach a learner. It
+  regenerates, and on exhausting retries the lesson is marked `failed` — `E01`
+  degrades gracefully around a missing lesson, which is a better outcome than a
+  wrong one.
+
+Cheap checks run before expensive ones: `B06` schema, then `B09` execution, then
+`P15` deterministic coherence, then the `P17` judge call. Anything the earlier
+stages reject never costs a judge call.
 
 Course level: outline generated once → lesson 1 generated immediately → lesson
 N+1 scheduled when the user enters lesson N.
 
 ## Invariants
 
-1. A lesson reaches `ready` only after passing both validation and, where
-   applicable, answer-key verification.
+1. A lesson reaches `ready` only after passing validation, answer-key
+   verification where applicable, coherence checks, and the `P17` quality gate.
 2. Retries are bounded at every stage; no state can loop indefinitely.
 3. Only one generation runs per lesson at a time — concurrent requests for the
    same lesson join the in-flight generation rather than starting a second.
 4. A cache hit in `B10` short-circuits before any model call is made.
 5. Just-in-time generation never blocks the user's current lesson.
+6. Retrieval runs once per course. No lesson generation performs retrieval.
+7. Retrieval failure degrades grounding; it never fails a lesson.
 
 ## Failure modes
 
@@ -79,6 +102,9 @@ N+1 scheduled when the user enters lesson N.
 | Model call fails | Retry per `B03` policy, then `failed` |
 | Validation exhausts retries | Lesson marked `failed`; `E01` ends the lesson gracefully at the last complete item |
 | Verification exhausts retries | Regenerate the exercise; if still failing, drop the exercise rather than failing the whole lesson |
+| Retrieval times out or returns nothing | Proceed ungrounded per `P14`; mark the course ungrounded for `P16`'s lower ceiling. Never a failure |
+| Quality gate exhausts retries | Lesson marked `failed`. Shipping a lesson known to be below threshold is not an option when nothing downstream reviews it |
+| Coherence check fails | Targeted regeneration of the specific item `P15` identified, not the whole lesson |
 | Background JIT generation fails | Silent to the user until they reach that lesson; retried on entry |
 | Cloud Run instance dies mid-generation | Lesson stuck in `generating` — needs a stale-state sweep so it does not block forever |
 
@@ -103,8 +129,11 @@ N+1 scheduled when the user enters lesson N.
 
 ## Acceptance criteria
 
-- [ ] All five invariants are covered by tests, including the concurrent-request
+- [ ] All seven invariants are covered by tests, including the concurrent-request
       join
+- [ ] A lesson scoring below the `P16` threshold never reaches a learner
+- [ ] Retrieval runs once per course, verified by `F07` records showing no
+      retrieval spend on lesson generation
 - [ ] A user working steadily never waits for lesson N+1
 - [ ] A cache hit performs zero model calls, verified by `F07` records
 - [ ] Every retry path is bounded and terminates in `ready` or `failed`

@@ -16,14 +16,18 @@ catalog.
 ## Scope
 
 **Owns**
-- The cache key: normalised topic + depth + experience level
+- The cache key: **topic shape + normalised topic + depth + experience level +
+  `P10` prompt version + `P12` corpus version**
 - Lookup before generation and promotion of a generated course to shared
-- Which courses qualify for sharing
+- Which courses qualify for sharing — including the `P16` score floor
+- Preferring a grounded course over an ungrounded one when both exist
 - The pre-cached starter topics that back the never-a-dead-end path in `E02`
-- Cache invalidation and versioning when generation prompts change
+- Cache invalidation when a prompt fragment or the corpus changes
 
 **Does not own**
 - Per-user variation → `B11` enrollment deltas
+- Topic normalisation rules → `P03`
+- Prompt and corpus version values → `P10`, `P12`
 - Generation → `B04`, `B05`
 - Cost reporting → `F07`
 
@@ -40,7 +44,8 @@ catalog.
 
 ## Depends on
 
-`F01`, `B04` (normalisation)
+`F01`, `P03` (normalisation rules), `P10` (prompt version), `P12` (corpus version),
+`P16` (score floor for sharing)
 
 ## Depended on by
 
@@ -60,6 +65,10 @@ catalog.
   `source` enum already exists (`FEATURE_PLAN.md:84`, `160`).
 - **Per-user generation limits tie into monetization later**
   (`FEATURE_PLAN.md:85`) — the cache is what makes a generous free tier viable.
+- **The cache also amortises quality assurance.** A shared course is generated,
+  verified, and judged by `P17` **once** and served to many learners, so the more
+  popular a topic, the cheaper its quality gate becomes per learner. This is what
+  makes gating every lesson affordable.
 
 ## Open questions
 
