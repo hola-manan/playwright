@@ -199,16 +199,22 @@ state machine, invariant, and failure-mode sections.
 
 ---
 
-## Build order
+## Milestone mapping
 
-Following the ten milestones in `FEATURE_PLAN.md:186-201`. Milestones 1–6 are the
-**launch-blocking minimum**; 7 and 8 are high-value fast-follows if timelines slip
-(`FEATURE_PLAN.md:201`).
+Which modules belong to which of the ten milestones in `FEATURE_PLAN.md:186-201`.
+Milestones 1–6 are the **launch-blocking minimum**; 7 and 8 are high-value
+fast-follows if timelines slip (`FEATURE_PLAN.md:201`).
+
+> **This is a grouping, not an execution order.** For what to actually build
+> first, see **[`docs/BUILD_ORDER.md`](../BUILD_ORDER.md)** — it starts with a
+> throwaway spike that answers whether the AI can teach at all, before any
+> infrastructure, and it deliberately departs from this table on `F06`, `F07`,
+> and the split between cheap and expensive trust work.
 
 | # | Milestone | Modules |
 |---|-----------|---------|
 | 1 | Skeleton + auth | `F01` `F02` `F03` `F04` `F05` `E03` `E06` `B01` `B02` `B11` `C01` `C02` `C03` `C04` `C05` `C06` |
-| 2 | Generation vertical slice | `P01` `P02` `P03` `P04` `P05` `P06` `P10` `P16`(draft) `B03` `B04` `B05` `B07` `E01` `E02` `C07` `C08` `C10` |
+| 2 | Generation vertical slice | `P01` `P02` `P03` `P04` `P05` `P06` `P10` `B03` `B04` `B05` `B07` `E01` `E02` `C07` `C08` `C10` |
 | 3 | All card & exercise types | `P07` `P08` `P09` `B13` `E04` `C09` `C11` `C12` `C13` `C14` |
 | 4 | **Trustworthy content** | `B06` `B08` `B09` `P11` `P12` `P13` `P14` `P15` `P16` `P17` |
 | 5 | Progress + win screen | `B12` `E05` `C15` |
@@ -222,8 +228,22 @@ Following the ten milestones in `FEATURE_PLAN.md:186-201`. Milestones 1–6 are 
 validation"; it is now the whole trust story — executable verification, retrieval
 grounding, coherence, and the quality gate. That is the honest consequence of
 shipping AI content with no human reviewer: everything that stands between a bad
-course and a learner lands here, and none of it can be deferred past the point
-where real users arrive.
+course and a learner lands here.
+
+Three caveats on treating this table as a schedule, all expanded in
+[`BUILD_ORDER.md`](../BUILD_ORDER.md):
+
+- **`F07` and `F06` sit too late here.** Cost and generation-latency data cannot
+  be reconstructed retroactively, and the tiering and caching strategy depends on
+  real numbers. Instrument them from the first real model call.
+- **Milestone 4's contents should not move together.** `B08`/`B09` answer-key
+  verification is cheap and directly protective — build it early. `P11`–`P17`
+  retrieval and the quality gate is a large build whose value begins when content
+  reaches someone other than you — that is a hard gate on external exposure, not
+  an early task.
+- **`P16` cannot be drafted before there is generated content to look at.** Its
+  behavioural anchors — what a 2 looks like versus a 4 — are written from
+  examples, which is Phase 0's job in `BUILD_ORDER.md`.
 
 Milestones 1–3 can run with prompt-constraint grounding only (`P14`'s ungrounded
 path), which is a legitimate internal-testing configuration. It is not a
@@ -348,11 +368,16 @@ acceptance criterion.
 
 ## Working on a module
 
+0. If you are wondering **which** module to pick up, that is
+   [`BUILD_ORDER.md`](../BUILD_ORDER.md), not this page.
 1. Read the module's spec here. It is written to stand alone — you should not need
    the source documents.
 2. Read the specs of anything in its **Depends on** list, at least their
    **Interface** sections.
 3. Code goes in the folder named in **Code location**; its README stub links back.
-4. Done means every box in **Acceptance criteria** is ticked.
+4. Done means every box in **Acceptance criteria** is ticked — but that describes
+   the module's **v1-launch** state, not one sitting. Most modules are visited
+   more than once; see the thin-slice-then-deepen model in
+   [`BUILD_ORDER.md`](../BUILD_ORDER.md).
 5. Resolve the **Open questions** as you go, and record the answers in the spec —
    these documents are living.

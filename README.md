@@ -16,7 +16,8 @@ decisions, and the module breakdown for building them.
 
 | Path | What it is |
 |------|-----------|
-| **[`docs/modules/`](docs/modules/README.md)** | **Start here.** 52 module specs and the index that organises them |
+| **[`docs/BUILD_ORDER.md`](docs/BUILD_ORDER.md)** | **Start here.** What to build first, and why it starts with a throwaway spike rather than infrastructure |
+| [`docs/modules/`](docs/modules/README.md) | 69 module specs and the index that organises them |
 | [`FEATURE_PLAN.md`](FEATURE_PLAN.md) | The frozen v1 vision: feature set, milestones, v2 scope |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | The locked technical stack and the reasoning behind each choice |
 | `apps/mobile/` | Flutter client (scaffold only) |
@@ -82,10 +83,11 @@ celebratory", "first card visible within seconds". Those promises get owning
 modules with measurable acceptance criteria rather than being left as residue in
 a design system.
 
-**To pick up work:** open [`docs/modules/README.md`](docs/modules/README.md),
-choose a module, and follow its spec. Each one stands alone — interface,
-dependencies, inherited decisions, open questions, and the acceptance criteria
-that define done.
+**To pick up work:** read [`docs/BUILD_ORDER.md`](docs/BUILD_ORDER.md) first — it
+says which module to start on and why the answer is "none of them yet". Then open
+[`docs/modules/README.md`](docs/modules/README.md) and follow the chosen module's
+spec. Each stands alone: interface, dependencies, inherited decisions, open
+questions, and the acceptance criteria that define done at v1 launch.
 
 ---
 
