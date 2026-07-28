@@ -144,6 +144,20 @@ for area in ("apps", "services", "packages", "infra"):
         if readme.parent.resolve() not in scaffold_dirs:
             fail("6 scaffold", f"stub {readme.relative_to(ROOT)} maps to no module")
 
+# ------------------------------------- check 6b: build order schedules all 69
+BUILD_ORDER = ROOT / "docs" / "BUILD_ORDER.md"
+if not BUILD_ORDER.is_file():
+    fail("6b build order", "docs/BUILD_ORDER.md is missing")
+else:
+    bo_text = BUILD_ORDER.read_text()
+    scheduled = set(ID_RE.findall(bo_text))
+    for ref in sorted(scheduled):
+        if ref not in specs:
+            fail("6b build order", f"BUILD_ORDER.md references {ref}, which does not exist")
+    for missing in sorted(set(specs) - scheduled):
+        fail("6b build order", f"{missing} appears in no phase — silently unscheduled")
+    notes.append(f"build order schedules {len(scheduled & set(specs))} modules")
+
 # --------------------------------------------------- check 7: mermaid fences
 opens = len(re.findall(r"^```mermaid\s*$", index_text, re.MULTILINE))
 fences = len(re.findall(r"^```", index_text, re.MULTILINE))
